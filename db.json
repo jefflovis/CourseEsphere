@@ -115,6 +115,24 @@
       "course_id": "d6ca",
       "creator_id": "2",
       "id": "8115"
+    },
+    {
+      "id": "8803",
+      "video_url": "https://www.youtube.com/watch?v=kTqkgoWxp_M",
+      "publish_date": "2025-07-11T03:00:00.000Z",
+      "status": "archived",
+      "title": "Aula Teste Categoria",
+      "course_id": "d6ca",
+      "creator_id": "2"
+    },
+    {
+      "id": "867f",
+      "video_url": "https://www.youtube.com/watch?v=kTqkgoWxp_M",
+      "publish_date": "2025-07-12T03:00:00.000Z",
+      "status": "draft",
+      "title": "Aula Teste Categoria 2",
+      "course_id": "d6ca",
+      "creator_id": "2"
     }
   ]
 }

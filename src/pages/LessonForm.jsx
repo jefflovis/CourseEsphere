@@ -1,3 +1,12 @@
+import {
+  Box,
+  Button,
+  Container,
+  MenuItem,
+  Paper,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
@@ -9,7 +18,10 @@ import { useAuth } from "../context/AuthContext";
 
 const schema = yup.object().shape({
   title: yup.string().required("Título obrigatório").min(3),
-  status: yup.string().required("Status obrigatório").oneOf(["draft", "published", "archived"]),
+  status: yup
+    .string()
+    .required("Status obrigatório")
+    .oneOf(["draft", "published", "archived"]),
   publish_date: yup
     .date()
     .required("Data obrigatória")
@@ -41,7 +53,6 @@ export default function LessonForm() {
         const res = await axios.get(`http://localhost:3001/courses/${courseId}`);
         setCurso(res.data);
 
-        // Verifica se o usuário é criador ou instrutor
         const isCriador = Number(res.data.creator_id) === Number(user.id);
         const isInstrutor = (res.data.instructors || []).map(Number).includes(Number(user.id));
 
@@ -73,7 +84,7 @@ export default function LessonForm() {
     };
 
     fetchCurso();
-  }, [aulaId, courseId]);
+  }, [aulaId, courseId, isEdit, navigate, setValue, user.id]);
 
   const onSubmit = async (data) => {
     try {
@@ -99,47 +110,70 @@ export default function LessonForm() {
   };
 
   return (
-    <div style={{ padding: "2rem" }}>
-      <h2>{isEdit ? "Editar Aula" : "Criar Nova Aula"}</h2>
+    <Container maxWidth="sm">
+      <Paper elevation={3} sx={{ padding: 4, marginTop: 5 }}>
+        <Typography variant="h5" gutterBottom>
+          {isEdit ? "Editar Aula" : "Criar Nova Aula"}
+        </Typography>
 
-      {carregando ? (
-        <p>Carregando dados...</p>
-      ) : (
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div>
-            <label>Título</label>
-            <input {...register("title")} />
-            <p>{errors.title?.message}</p>
-          </div>
+        {carregando ? (
+          <Typography>Carregando dados...</Typography>
+        ) : (
+          <form onSubmit={handleSubmit(onSubmit)} noValidate>
+            <Box mb={2}>
+              <TextField
+                label="Título"
+                fullWidth
+                {...register("title")}
+                error={!!errors.title}
+                helperText={errors.title?.message}
+              />
+            </Box>
 
-          <div>
-            <label>Status</label>
-            <select {...register("status")}>
-              <option value="">Selecione</option>
-              <option value="draft">Rascunho</option>
-              <option value="published">Publicado</option>
-              <option value="archived">Arquivado</option>
-            </select>
-            <p>{errors.status?.message}</p>
-          </div>
+            <Box mb={2}>
+              <TextField
+                label="Status"
+                fullWidth
+                select
+                defaultValue=""
+                {...register("status")}
+                error={!!errors.status}
+                helperText={errors.status?.message}
+              >
+                <MenuItem value="draft">Rascunho</MenuItem>
+                <MenuItem value="published">Publicado</MenuItem>
+                <MenuItem value="archived">Arquivado</MenuItem>
+              </TextField>
+            </Box>
 
-          <div>
-            <label>Data de Publicação</label>
-            <input type="date" {...register("publish_date")} />
-            <p>{errors.publish_date?.message}</p>
-          </div>
+            <Box mb={2}>
+              <TextField
+                label="Data de Publicação"
+                type="date"
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                {...register("publish_date")}
+                error={!!errors.publish_date}
+                helperText={errors.publish_date?.message}
+              />
+            </Box>
 
-          <div>
-            <label>URL do Vídeo</label>
-            <input {...register("video_url")} />
-            <p>{errors.video_url?.message}</p>
-          </div>
+            <Box mb={2}>
+              <TextField
+                label="URL do Vídeo"
+                fullWidth
+                {...register("video_url")}
+                error={!!errors.video_url}
+                helperText={errors.video_url?.message}
+              />
+            </Box>
 
-          <button type="submit">
-            {isEdit ? "Salvar Alterações" : "Criar Aula"}
-          </button>
-        </form>
-      )}
-    </div>
+            <Button variant="contained" color="primary" type="submit" fullWidth>
+              {isEdit ? "Salvar Alterações" : "Criar Aula"}
+            </Button>
+          </form>
+        )}
+      </Paper>
+    </Container>
   );
 }

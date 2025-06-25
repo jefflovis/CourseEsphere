@@ -1,12 +1,31 @@
-import { useEffect, useState } from "react";
+import {
+  Box,
+  Button,
+  Container,
+  Typography,
+  Grid,
+  TextField,
+  MenuItem,
+  Select,
+  Card,
+  CardContent,
+  CardActions,
+  Divider,
+  IconButton,
+} from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import AddIcon from "@mui/icons-material/Add";
 import axios from "axios";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "react-toastify";
+import { format, parseISO } from "date-fns";
 
 export default function CourseDetails() {
   const { user } = useAuth();
-  const { id } = useParams(); // ID do curso
+  const { id } = useParams();
   const navigate = useNavigate();
 
   const [curso, setCurso] = useState(null);
@@ -14,8 +33,8 @@ export default function CourseDetails() {
   const [filtroTitulo, setFiltroTitulo] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("");
   const [paginaAtual, setPaginaAtual] = useState(1);
-  const aulasPorPagina = 5;
   const [carregando, setCarregando] = useState(true);
+  const aulasPorPagina = 5;
 
   const isCriador = Number(curso?.creator_id) === Number(user.id);
   const isInstrutor = curso?.instructors?.includes(user.id);
@@ -26,7 +45,6 @@ export default function CourseDetails() {
         const cursoRes = await axios.get(`http://localhost:3001/courses/${id}`);
         const cursoData = cursoRes.data;
 
-        // Verifica permissão de acesso
         const acessoPermitido =
           Number(cursoData.creator_id) === Number(user.id) ||
           cursoData.instructors?.includes(user.id);
@@ -71,52 +89,64 @@ export default function CourseDetails() {
   );
 
   return (
-    <div style={{ padding: "2rem" }}>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
       {carregando ? (
-        <p>Carregando...</p>
+        <Typography>Carregando...</Typography>
       ) : (
         <>
-          <h2>{curso.name}</h2>
-          <p>{curso.description}</p>
-          <p>
+          <Typography variant="h4" gutterBottom>
+            {curso.name}
+          </Typography>
+          <Typography variant="body1" gutterBottom>
+            {curso.description}
+          </Typography>
+          <Typography variant="body2" gutterBottom>
             {curso.start_date} até {curso.end_date}
-          </p>
+          </Typography>
 
-          <h4>Instrutores:</h4>
-          <ul>
-            <li><strong>{user.name}</strong> (Você)</li>
-            {curso.instructors?.map((instrutorId) => (
-              <li key={instrutorId} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                Instrutor #{instrutorId}
-                {isCriador && (
-                  <button
-                    onClick={async () => {
-                      const confirmar = window.confirm("Remover este instrutor?");
-                      if (confirmar) {
-                        try {
-                          const atualizados = curso.instructors.filter((id) => id !== instrutorId);
-                          await axios.put(`http://localhost:3001/courses/${curso.id}`, {
-                            ...curso,
-                            instructors: atualizados,
-                          });
-                          setCurso((prev) => ({ ...prev, instructors: atualizados }));
-                          toast.success("Instrutor removido");
-                        } catch (err) {
-                          toast.error("Erro ao remover instrutor");
-                        }
-                      }
-                    }}
-                  >
-                    Remover
-                  </button>
-                )}
+          <Box my={3}>
+            <Typography variant="h6">Instrutores</Typography>
+            <ul>
+              <li>
+                <strong>{user.name}</strong> (Você)
               </li>
-            ))}
-          </ul>
+              {curso.instructors?.map((instrutorId) => (
+                <li key={instrutorId}>
+                  Instrutor #{instrutorId}
+                  {isCriador && (
+                    <Button
+                      color="error"
+                      size="small"
+                      onClick={async () => {
+                        const confirmar = window.confirm("Remover este instrutor?");
+                        if (confirmar) {
+                          try {
+                            const atualizados = curso.instructors.filter((id) => id !== instrutorId);
+                            await axios.put(`http://localhost:3001/courses/${curso.id}`, {
+                              ...curso,
+                              instructors: atualizados,
+                            });
+                            setCurso((prev) => ({ ...prev, instructors: atualizados }));
+                            toast.success("Instrutor removido");
+                          } catch {
+                            toast.error("Erro ao remover instrutor");
+                          }
+                        }
+                      }}
+                    >
+                      Remover
+                    </Button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </Box>
 
           {isCriador && (
-            <button
-              style={{ marginTop: "1rem" }}
+            <Button
+              variant="outlined"
+              startIcon={<AddIcon />}
+              sx={{ mb: 2 }}
               onClick={async () => {
                 try {
                   const res = await axios.get("https://randomuser.me/api/");
@@ -139,118 +169,157 @@ export default function CourseDetails() {
                   }));
 
                   toast.success("Novo instrutor adicionado!");
-                } catch (err) {
+                } catch {
                   toast.error("Erro ao adicionar instrutor");
                 }
               }}
             >
-              + Adicionar Instrutor Aleatório
-            </button>
+              Adicionar Instrutor Aleatório
+            </Button>
           )}
 
           {(isCriador || isInstrutor) && (
-            <button onClick={() => navigate(`/cursos/${id}/aulas/nova`)}>
-              + Criar nova aula
-            </button>
+            <Button
+              variant="contained"
+              sx={{ mb: 3 }}
+              onClick={() => navigate(`/cursos/${id}/aulas/nova`)}
+            >
+              Criar Nova Aula
+            </Button>
           )}
 
-          <h3 style={{ marginTop: "2rem" }}>Aulas</h3>
-          <div style={{ display: "flex", gap: "1rem", marginBottom: "1rem" }}>
-            <input
-              type="text"
-              placeholder="Buscar por título"
-              value={filtroTitulo}
-              onChange={(e) => setFiltroTitulo(e.target.value)}
-            />
-            <select
-              value={filtroStatus}
-              onChange={(e) => setFiltroStatus(e.target.value)}
-            >
-              <option value="">Todos os status</option>
-              <option value="draft">Rascunho</option>
-              <option value="published">Publicado</option>
-              <option value="archived">Arquivado</option>
-            </select>
-          </div>
+          <Typography variant="h5" gutterBottom>
+            Aulas
+          </Typography>
+
+          <Grid container spacing={2} mb={2}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Buscar por título"
+                fullWidth
+                value={filtroTitulo}
+                onChange={(e) => setFiltroTitulo(e.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Select
+                fullWidth
+                displayEmpty
+                value={filtroStatus}
+                onChange={(e) => setFiltroStatus(e.target.value)}
+              >
+                <MenuItem value="">Todos os status</MenuItem>
+                <MenuItem value="draft">Rascunho</MenuItem>
+                <MenuItem value="published">Publicado</MenuItem>
+                <MenuItem value="archived">Arquivado</MenuItem>
+              </Select>
+            </Grid>
+          </Grid>
 
           {aulasFiltradas.length === 0 ? (
-            <p>Nenhuma aula encontrada.</p>
+            <Typography>Nenhuma aula encontrada.</Typography>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <Grid container spacing={2}>
               {aulasPaginadas.map((aula) => (
-                <div
-                  key={aula.id}
-                  style={{
-                    border: "1px solid #ccc",
-                    padding: "1rem",
-                    borderRadius: "8px",
-                  }}
-                >
-                  <h4>{aula.title}</h4>
-                  <p>Status: {aula.status}</p>
-                  <p>Publicar em: {aula.publish_date}</p>
-                  <p>
-                    Vídeo:{" "}
-                    <a href={aula.video_url} target="_blank" rel="noreferrer">
-                      Ver vídeo
-                    </a>
-                  </p>
+                <Grid item xs={12} md={6} key={aula.id}>
+                  <Card>
+                    <CardContent>
+                      <Typography variant="h6">{aula.title}</Typography>
+                      <Typography>Status: {aula.status}</Typography>
+                      <Typography>Publicar em: {format(parseISO(aula.publish_date), "dd/MM/yyyy")}</Typography>
 
-                  {(Number(aula.creator_id) === Number(user.id) || isCriador) && (
-                    <div style={{ display: "flex", gap: "0.5rem" }}>
-                      <button
-                        onClick={() =>
-                          navigate(`/cursos/${id}/aulas/${aula.id}/editar`)
-                        }
-                      >
-                        ✏️ Editar aula
-                      </button>
-                      <button
-                        onClick={async () => {
-                          const confirmar = window.confirm("Deseja realmente excluir esta aula?");
-                          if (confirmar) {
-                            try {
-                              await axios.delete(`http://localhost:3001/lessons/${aula.id}`);
-                              setAulas((prev) =>
-                                prev.filter((a) => a.id !== aula.id)
-                              );
-                              toast.success("Aula excluída com sucesso.");
-                            } catch (err) {
-                              toast.error("Erro ao excluir aula.");
-                            }
-                          }
+                      {/* Miniatura do vídeo */}
+                      <Box
+                        sx={{
+                          mt: 2,
+                          position: "relative",
+                          paddingTop: "56.25%", // proporção 16:9 para iframe responsivo
+                          overflow: "hidden",
+                          borderRadius: 1,
                         }}
                       >
-                        🗑️ Excluir aula
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
+                        <iframe
+                          src={aula.video_url.replace("watch?v=", "embed/")}
+                          title={aula.title}
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          style={{
+                            position: "absolute",
+                            top: 0,
+                            left: 0,
+                            width: "100%",
+                            height: "100%",
+                          }}
+                        />
+                      </Box>
 
-              {totalPaginas > 1 && (
-                <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem" }}>
-                  <button
-                    disabled={paginaAtual === 1}
-                    onClick={() => setPaginaAtual((p) => p - 1)}
-                  >
-                    Anterior
-                  </button>
-                  <span>
-                    Página {paginaAtual} de {totalPaginas}
-                  </span>
-                  <button
-                    disabled={paginaAtual === totalPaginas}
-                    onClick={() => setPaginaAtual((p) => p + 1)}
-                  >
-                    Próxima
-                  </button>
-                </div>
-              )}
-            </div>
+                      <Typography sx={{ mt: 1 }}>
+                        <a href={aula.video_url} target="_blank" rel="noreferrer">
+                          Ver vídeo completo
+                        </a>
+                      </Typography>
+                    </CardContent>
+
+                    <CardActions>
+                      {(Number(aula.creator_id) === Number(user.id) || isCriador) && (
+                        <>
+                          <IconButton
+                            onClick={() =>
+                              navigate(`/cursos/${id}/aulas/${aula.id}/editar`)
+                            }
+                          >
+                            <EditIcon />
+                          </IconButton>
+                          <IconButton
+                            color="error"
+                            onClick={async () => {
+                              const confirmar = window.confirm("Deseja excluir esta aula?");
+                              if (confirmar) {
+                                try {
+                                  await axios.delete(`http://localhost:3001/lessons/${aula.id}`);
+                                  setAulas((prev) => prev.filter((a) => a.id !== aula.id));
+                                  toast.success("Aula excluída");
+                                } catch {
+                                  toast.error("Erro ao excluir aula");
+                                }
+                              }
+                            }}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </>
+                      )}
+                    </CardActions>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          )}
+
+          {totalPaginas > 1 && (
+            <Box display="flex" justifyContent="center" mt={4} gap={2}>
+              <Button
+                variant="outlined"
+                disabled={paginaAtual === 1}
+                onClick={() => setPaginaAtual((p) => p - 1)}
+              >
+                Anterior
+              </Button>
+              <Typography>
+                Página {paginaAtual} de {totalPaginas}
+              </Typography>
+              <Button
+                variant="outlined"
+                disabled={paginaAtual === totalPaginas}
+                onClick={() => setPaginaAtual((p) => p + 1)}
+              >
+                Próxima
+              </Button>
+            </Box>
           )}
         </>
       )}
-    </div>
+    </Container>
   );
 }

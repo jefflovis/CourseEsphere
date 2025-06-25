@@ -3,14 +3,25 @@ import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { format, parseISO } from "date-fns";
+import {
+  Box,
+  Typography,
+  Button,
+  Grid,
+  Card,
+  CardContent,
+  CardActions,
+  CircularProgress,
+  Container,
+} from "@mui/material";
 
 export default function Dashboard() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [cursos, setCursos] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Buscar cursos do usuário logado
   useEffect(() => {
     const fetchCursos = async () => {
       try {
@@ -19,7 +30,6 @@ export default function Dashboard() {
           (curso) =>
             Number(curso.creator_id) === Number(user.id) ||
             (curso.instructors || []).map(Number).includes(Number(user.id))
-
         );
         setCursos(meusCursos);
       } catch (err) {
@@ -31,72 +41,67 @@ export default function Dashboard() {
     fetchCursos();
   }, [user.id]);
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
-
   const irParaNovoCurso = () => {
     navigate("/cursos/novo");
   };
 
   return (
-    <div style={{ padding: "2rem" }}>
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <h2>Olá, {user.name}</h2>
-        <button onClick={handleLogout}>Sair</button>
-      </div>
+    <Container maxWidth="lg">
+      <Typography variant="h4" gutterBottom>
+        Olá, {user.name}
+      </Typography>
 
-      <h3 style={{ marginTop: "2rem" }}>Meus Cursos</h3>
-      <button onClick={irParaNovoCurso} style={{ marginBottom: "1rem" }}>
-        + Criar novo curso
-      </button>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mt={4}>
+        <Typography variant="h5">Meus Cursos</Typography>
+        <Button variant="contained" color="primary" onClick={irParaNovoCurso}>
+          + Criar novo curso
+        </Button>
+      </Box>
 
       {loading ? (
-        <p>Carregando...</p>
+        <Box display="flex" justifyContent="center" mt={4}>
+          <CircularProgress />
+        </Box>
       ) : cursos.length === 0 ? (
-        <p>Você ainda não participa de nenhum curso.</p>
+        <Typography mt={4}>Você ainda não participa de nenhum curso.</Typography>
       ) : (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem" }}>
+        <Grid container spacing={3} mt={2}>
           {cursos.map((curso) => {
             const ehCriador = Number(curso.creator_id) === Number(user.id);
-
             return (
-              <div
-                key={curso.id}
-                style={{
-                  border: "1px solid #ccc",
-                  borderRadius: "8px",
-                  padding: "1rem",
-                  width: "250px",
-                }}
-              >
-                <h4>{curso.name}</h4>
-                <p>{curso.description}</p>
-                <p>
-                  {curso.start_date} até {curso.end_date}
-                </p>
-
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                  <button onClick={() => navigate(`/cursos/${curso.id}`)}>
-                    Ver detalhes
-                  </button>
-
-                  {ehCriador && (
-                    <button
-                      onClick={() => navigate(`/cursos/${curso.id}/editar`)}
-                      style={{ backgroundColor: "#f0f0f0" }}
-                    >
-                      ✏️ Editar curso
-                    </button>
-                  )}
-                </div>
-              </div>
+              <Grid item xs={12} sm={6} md={4} key={curso.id}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      {curso.name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {curso.description}
+                    </Typography>
+                    <Typography variant="caption" display="block" mt={1}>
+                      {format(parseISO(curso.start_date),"dd/MM/yyyy")} até {format(parseISO(curso.end_date), "dd/MM/yyyy")}
+                    </Typography>
+                  </CardContent>
+                  <CardActions>
+                    <Button size="small" onClick={() => navigate(`/cursos/${curso.id}`)}>
+                      Ver detalhes
+                    </Button>
+                    {ehCriador && (
+                      <Button
+                        size="small"
+                        onClick={() => navigate(`/cursos/${curso.id}/editar`)}
+                        color="secondary"
+                      >
+                        ✏️ Editar
+                      </Button>
+                    )}
+                  </CardActions>
+                </Card>
+              </Grid>
             );
           })}
-
-        </div>
+        </Grid>
       )}
-    </div>
+    </Container>
   );
 }

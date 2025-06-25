@@ -1,3 +1,11 @@
+import {
+  Box,
+  Button,
+  Container,
+  Paper,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
@@ -24,7 +32,7 @@ const schema = yup.object().shape({
 export default function CourseForm() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { id } = useParams(); // usado para edição
+  const { id } = useParams();
   const isEdit = Boolean(id);
   const [carregando, setCarregando] = useState(false);
 
@@ -32,7 +40,7 @@ export default function CourseForm() {
     register,
     handleSubmit,
     setValue,
-    formState: { errors }
+    formState: { errors },
   } = useForm({
     resolver: yupResolver(schema),
   });
@@ -54,7 +62,7 @@ export default function CourseForm() {
         setCarregando(false);
       });
     }
-  }, [id]);
+  }, [id, setValue, navigate, user.id]);
 
   const onSubmit = async (data) => {
     try {
@@ -79,38 +87,68 @@ export default function CourseForm() {
   };
 
   return (
-    <div style={{ padding: "2rem" }}>
-      <h2>{isEdit ? "Editar Curso" : "Criar Novo Curso"}</h2>
+    <Container maxWidth="sm">
+      <Paper elevation={3} sx={{ padding: 4, marginTop: 5 }}>
+        <Typography variant="h5" gutterBottom>
+          {isEdit ? "Editar Curso" : "Criar Novo Curso"}
+        </Typography>
 
-      {carregando ? (
-        <p>Carregando dados...</p>
-      ) : (
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div>
-            <label>Nome</label>
-            <input {...register("name")} />
-            <p>{errors.name?.message}</p>
-          </div>
-          <div>
-            <label>Descrição</label>
-            <textarea {...register("description")} />
-            <p>{errors.description?.message}</p>
-          </div>
-          <div>
-            <label>Data de Início</label>
-            <input type="date" {...register("start_date")} />
-            <p>{errors.start_date?.message}</p>
-          </div>
-          <div>
-            <label>Data de Término</label>
-            <input type="date" {...register("end_date")} />
-            <p>{errors.end_date?.message}</p>
-          </div>
-          <button type="submit">
-            {isEdit ? "Salvar Alterações" : "Criar Curso"}
-          </button>
-        </form>
-      )}
-    </div>
+        {carregando ? (
+          <Typography>Carregando dados...</Typography>
+        ) : (
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <Box mb={2}>
+              <TextField
+                label="Nome"
+                fullWidth
+                {...register("name")}
+                error={!!errors.name}
+                helperText={errors.name?.message}
+              />
+            </Box>
+
+            <Box mb={2}>
+              <TextField
+                label="Descrição"
+                fullWidth
+                multiline
+                rows={4}
+                {...register("description")}
+                error={!!errors.description}
+                helperText={errors.description?.message}
+              />
+            </Box>
+
+            <Box mb={2}>
+              <TextField
+                label="Data de Início"
+                type="date"
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                {...register("start_date")}
+                error={!!errors.start_date}
+                helperText={errors.start_date?.message}
+              />
+            </Box>
+
+            <Box mb={2}>
+              <TextField
+                label="Data de Término"
+                type="date"
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                {...register("end_date")}
+                error={!!errors.end_date}
+                helperText={errors.end_date?.message}
+              />
+            </Box>
+
+            <Button variant="contained" color="primary" type="submit" fullWidth>
+              {isEdit ? "Salvar Alterações" : "Criar Curso"}
+            </Button>
+          </form>
+        )}
+      </Paper>
+    </Container>
   );
 }
