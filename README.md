@@ -46,12 +46,12 @@ npm run dev
 Acesse o app no navegador:
 👉 http://localhost:5173
 
-##🔐 Login
+## 🔐 Login
 Use um e-mail/senha já existentes no db.json.
 
-##🛠 Requisitos:
----
--Node.js v18+
--NPM ou Yarn
--json-server instalado globalmente
----
+## 🛠 Requisitos:
+
+Node.js v18+ / 
+NPM ou Yarn /
+json-server instalado globalmente
+
